@@ -1,0 +1,5 @@
+project_id = "your-project-ref"
+
+[functions]
+  # Smoke test function for gateway verification
+  smoke-test = { verify_jwt = false }
