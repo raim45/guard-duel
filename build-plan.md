@@ -97,8 +97,9 @@ Goal: one function that plays a single turn. Humans use it now and agents will u
 Done when: all those cases pass deterministically, and the same function runs both in Node and in the Stage 1 edge function.
 
 ### Stage 5: Database and security
-
+DESIGN ADD-ON (keep every step below). Also include: guards.look_seed (text, set at first save, kept by later versions); profiles.callsign (unique, 3 to 16 letters, digits or underscores); and a stats view that returns attempts and breaks per guard, so the Board can sort "Toughest" by lowest break rate among vaults with at least 20 attempts.
 Goal: store everything, with secrets and guard instructions locked down.
+
 
 1. Migrations for: `profiles`, `guards` (immutable versions with name, instructions, fields, key type, published flag), `sessions`, `turns`, `verdicts`, `session_secrets`, `reports`, `usage_ledger` and a `settings` table for limits and kill switches.
 2. Row-level security: `session_secrets` has no policy for normal users, so only the edge functions' service role reads it. Owners read and write their own guards. Other users see published guards only through a view with name, key type and stats, never the instructions. Attackers read their own sessions and turns. Owners read sessions on their own guards.
@@ -109,7 +110,7 @@ Goal: store everything, with secrets and guard instructions locked down.
 Done when: those access tests pass.
 
 ### Stage 6: API (edge functions)
-
+DESIGN ADD-ON (keep every step below). Also: attack-start returns the limits (picks, patrol seconds, allowed wrong attempts, cooldown seconds) and the key-format hint. attack-message returns picks left, attempts left and the server's time remaining on every call. A failed (errored) turn does not spend a pick. attack-result also returns picks used, seconds used and a flag saying whether the orders may be shown. owner-sessions returns the break turn and the leaking quote. The Warden's opening line is shown only by the interface; it is never saved or sent to the model. The ward list must match the engine's toggles.
 Goal: everything the client needs, with limits enforced on the server.
 
 1. Functions: `guard-create`, `guard-list-mine`, `guard-publish` (turn on or off), `guard-browse` (public fields only), `attack-start`, `attack-message`, `attack-guess`, `attack-result`, `owner-sessions` and `report-create`.
@@ -125,7 +126,7 @@ Goal: everything the client needs, with limits enforced on the server.
 Done when: those tests pass against the hosted dev project.
 
 ### Stage 7: Minimal client (functional only, no design)
-
+DESIGN ADD-ON (keep steps 1 to 3 exactly as written: the API client, all capabilities, and the error, loading and empty states). This overrides step 4 ("default browser styling"): the client is built from design-doc.md instead. Order of work: (a) step 1, the API client; (b) design phases D0 foundations, D1 primitives, D2 game parts and D3 chat parts, each finished with its accept check from the design doc's Build order table; (c) step 2's capabilities are built as design phase D4, screens 1 to 7, one at a time, in order, with every state and every line of copy from the design doc; use mock data first, then the real API. Do not build effects or sound yet (they come in Stage 8). Commit once per design phase.
 Goal: a plain, working client so real people can play. Visual design comes later from the design doc.
 
 1. A typed API client file used by every page.
@@ -136,6 +137,7 @@ Goal: a plain, working client so real people can play. Visual design comes later
 Done when: two test accounts can complete the whole loop in a browser.
 
 ### Stage 8: Safety checks and release v0.1
+DESIGN ADD-ON (keep every step below). Before tagging v0.1.0, do design phase D5: build fx/presets.ts and fx/sound.ts from the design doc's Motion and Sound sections (the iris, stamp, Cracked and Held sequences, confetti, toast and dialog motion, and every sound in the table). Honor reduced motion, keep sound muted until the first tap, make a tap skip the Cracked sequence, and keep it under 2 seconds. Also check that no animation, Warden mood or sound reveals a verdict while a heist is active.
 
 Goal: safe enough to let real people use it.
 
@@ -187,6 +189,7 @@ Goal: explain failures and, optionally, require guards to pass before they are s
 Done when: the autopsy runs on saved failures, bad outputs are rejected, and the loop works on a deliberately weak guard.
 
 ### Stage 12: Agent features in the client
+DESIGN ADD-ON (keep every step below). Also build design phase D6: screens 8 (Stress Test) and 9 (Post-Mortem), the Crew card and the Patch diff, from design-doc.md. When everything else in this stage passes, do design phase D7: run the design doc's full QA checklist (all widths, keyboard-only run, axe, reduced motion, sound muted by default, secret-leak check, first-load size, screenshots saved in docs/screens/).
 
 Goal: owners can use the agents without a script.
 
