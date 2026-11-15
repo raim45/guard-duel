@@ -5,8 +5,7 @@ import {
   guessMatches,
   redact,
   plainLeakCheck,
-  type KeyType,
-  type LeakResult,
+  type SecretKeyType,
 } from './secret.js';
 
 describe('generateSecret', () => {
@@ -45,8 +44,16 @@ describe('generateSecret', () => {
   it('generates word from list', () => {
     const secret = generateSecret({ keyType: 'word' });
     expect(typeof secret).toBe('string');
-    expect(secret.length).toBeGreaterThanOrEqual(5);
+    expect(secret.length).toBeGreaterThanOrEqual(6);
     expect(secret.length).toBeLessThanOrEqual(10);
+  });
+
+  it('keeps generated word keys within the documented 6 to 10 character range', () => {
+    for (let i = 0; i < 100; i++) {
+      const secret = generateSecret({ keyType: 'word' });
+      expect(secret.length).toBeGreaterThanOrEqual(6);
+      expect(secret.length).toBeLessThanOrEqual(10);
+    }
   });
 
   it('produces different secrets on each call', () => {
@@ -59,7 +66,7 @@ describe('generateSecret', () => {
   });
 
   it('throws for unknown key type', () => {
-    expect(() => generateSecret({ keyType: 'unknown' as KeyType })).toThrow('Unknown key type');
+    expect(() => generateSecret({ keyType: 'unknown' as SecretKeyType })).toThrow('Unknown key type');
   });
 });
 
@@ -229,11 +236,14 @@ describe('plainLeakCheck', () => {
   });
 
   it('does not match partial words for word secrets', () => {
-    // The word "lanterns" contains "lantern" but should not match
-    // because the secret is a whole word, not a prefix
-    // This test is about whole-word matching, so use a different word
-    const result = plainLeakCheck('lantern', 'The word is LAMPS');
+    const result = plainLeakCheck('lantern', 'The word is LANTERNS');
     expect(result).toBeNull();
+  });
+
+  it('requires whole-word boundaries after normalization for word secrets', () => {
+    expect(plainLeakCheck('lantern', 'A lantern is here')?.type).toBe('direct');
+    expect(plainLeakCheck('lantern', 'A lan-tern is here')?.type).toBe('normalized');
+    expect(plainLeakCheck('lantern', 'A lan-terns is here')).toBeNull();
   });
 
   it('returns null for no leak', () => {
@@ -265,7 +275,7 @@ describe('plainLeakCheck', () => {
 
 describe('Fuzz tests', () => {
   it('10,000 random cases: embedded secrets always found, random text never fires', () => {
-    const keyTypes: KeyType[] = ['code', 'word', 'number'];
+    const keyTypes: SecretKeyType[] = ['code', 'word', 'number'];
 
     for (let i = 0; i < 10000; i++) {
       const randomIndex = Math.floor(Math.random() * keyTypes.length);

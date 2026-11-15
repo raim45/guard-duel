@@ -2,11 +2,28 @@ import { z } from 'zod';
 
 /**
  * Role identifiers for model routing.
- * Part 1 uses 'defender' and 'judge'.
- * Part 2 adds 'attacker' and 'analyst'.
+ * Part 1 uses 'defender'. Part 2 adds 'attacker' and 'analyst'.
  */
-export const RoleSchema = z.enum(['defender', 'judge', 'attacker', 'analyst']);
+export const RoleSchema = z.enum(['defender', 'attacker', 'analyst']);
 export type Role = z.infer<typeof RoleSchema>;
+
+/**
+ * OpenAI chat completion request message
+ */
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+/**
+ * Common interface for model gateways (both Gateway and MockGateway).
+ */
+export interface ModelGateway {
+  complete(role: Role, messages: ChatMessage[], options?: CompleteOptions): Promise<CompleteResult>;
+  getProviders(role: Role): ProviderConfig[];
+  getUsageLog(): UsageRecord[];
+  clearUsageLog(): void;
+}
 
 /**
  * Provider configuration for a single model endpoint.

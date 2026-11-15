@@ -5,6 +5,8 @@ import type {
   CompleteOptions,
   CompleteResult,
   UsageRecord,
+  ChatMessage,
+  ModelGateway,
 } from './types.js';
 import {
   GatewayError,
@@ -30,14 +32,6 @@ const MAX_RETRIES = 2;
  * Base delay for exponential backoff (ms)
  */
 const BASE_RETRY_DELAY_MS = 1_000;
-
-/**
- * OpenAI chat completion request message
- */
-interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
 
 /**
  * OpenAI chat completion request body
@@ -76,14 +70,14 @@ interface ChatCompletionResponse {
 /**
  * Model Gateway - handles completion calls with provider fallback, retries, structured output, and usage logging.
  */
-export class Gateway {
+export class Gateway implements ModelGateway {
   private readonly modelConfig: ModelConfig;
   private readonly usageLog: UsageRecord[] = [];
   private readonly usageLogPath: string;
 
   constructor(modelConfig: ModelConfig, usageLogPath = 'usage.jsonl') {
     // Validate that all required roles have at least one provider
-    const requiredRoles: Role[] = ['defender', 'judge', 'attacker', 'analyst'];
+    const requiredRoles: Role[] = ['defender', 'attacker', 'analyst'];
     for (const role of requiredRoles) {
       const providers = modelConfig[role];
       if (!providers || providers.length === 0) {

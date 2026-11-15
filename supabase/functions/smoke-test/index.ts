@@ -57,7 +57,7 @@ interface CompleteResult {
   model: string;
 }
 
-type Role = 'defender' | 'judge' | 'attacker' | 'analyst';
+type Role = 'defender';
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -80,7 +80,7 @@ serve(async (req) => {
 
     try {
       const body = await req.json();
-      if (body.role && ['defender', 'judge'].includes(body.role)) {
+      if (body.role === 'defender') {
         role = body.role;
       }
       if (typeof body.message === 'string') {

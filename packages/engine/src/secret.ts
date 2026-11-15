@@ -3,10 +3,10 @@
  * No AI, no external dependencies - pure Web Crypto and string manipulation.
  */
 
-export type KeyType = 'code' | 'word' | 'number';
+export type SecretKeyType = 'code' | 'word' | 'number';
 
 export interface SecretOptions {
-  keyType: KeyType;
+  keyType: SecretKeyType;
   length?: number;        // for code/number: character/digit count
   alphabet?: string;      // for code: custom alphabet (no look-alikes by default)
 }
@@ -23,30 +23,15 @@ const DEFAULT_NUMBER_ALPHABET = '234679';
  * These are uncommon enough to not be guessable, but memorable.
  * All words are 6-10 letters.
  */
-/**
- * Curated list of unusual 6-10 letter words for passphrase secrets.
- * These are uncommon enough to not be guessable, but memorable.
- * All words are 6-10 letters.
- */
-/**
- * Curated list of unusual 6-10 letter words for passphrase secrets.
- * These are uncommon enough to not be guessable, but memorable.
- * All words are 6-10 letters.
- */
-// Word list - use array with explicit type to satisfy TypeScript
 const WORDS = [
-  'lantern', 'velvet', 'cobalt', 'zephyr', 'quasar', 'mosaic', 'prism', 'echo',
-  'nexus', 'vortex', 'lumen', 'cipher', 'glyph', 'anchor', 'beacon', 'cradle',
-  'drift', 'ember', 'flint', 'glacier', 'horizon', 'ivory', 'jasper', 'kelp',
-  'lagoon', 'marble', 'noble', 'opal', 'pebble', 'quartz', 'ripple', 'saffron',
-  'talon', 'umbra', 'vivid', 'willow', 'xenon', 'yearn', 'zeppelin', 'abyss',
-  'bloom', 'canyon', 'dune', 'everest', 'fjord', 'glade', 'haven', 'island',
-  'jungle', 'karst', 'lunar', 'meadow', 'nebula', 'oasis', 'peak', 'quill',
-  'ridge', 'summit', 'tundra', 'valley', 'xeric',
-  'yarrow', 'zenith', 'amber', 'basil', 'coral', 'diamond', 'emerald', 'flora',
-  'garnet', 'indigo', 'jade', 'krypton', 'lilac', 'magnolia', 'nymph',
-  'orchid', 'pearl', 'ruby', 'sapphire', 'topaz', 'violet',
-  'wisteria', 'xanthic', 'yellow', 'zircon',
+  'lantern', 'velvet', 'cobalt', 'zephyr', 'quasar', 'mosaic', 'vortex', 'cipher',
+  'anchor', 'beacon', 'cradle', 'glacier', 'horizon', 'jasper',
+  'lagoon', 'marble', 'pebble', 'quartz', 'ripple', 'saffron',
+  'willow', 'zeppelin',
+  'canyon', 'everest', 'island',
+  'jungle', 'meadow', 'nebula', 'summit', 'tundra', 'valley',
+  'yarrow', 'zenith', 'diamond', 'emerald', 'garnet', 'indigo', 'krypton', 'magnolia',
+  'orchid', 'sapphire', 'violet', 'wisteria', 'xanthic', 'yellow', 'zircon',
 ] as string[];
 
 const WORD_LIST_LENGTH = WORDS.length;
@@ -107,12 +92,12 @@ export function generateSecret(options: SecretOptions): string {
     case 'word': {
       const bytes = new Uint32Array(1);
       crypto.getRandomValues(bytes);
-      // @ts-ignore - index always in bounds due to modulo
+      // @ts-expect-error - index always in bounds due to modulo
       return WORDS[bytes[0] % WORD_LIST_LENGTH];
     }
 
     default:
-      throw new Error(`Unknown key type: ${keyType}`);
+      throw new Error('Unknown key type: ' + keyType);
   }
 }
 
@@ -123,12 +108,21 @@ export function generateSecret(options: SecretOptions): string {
  * - remove whitespace, dashes, underscores, dots, zero-width chars
  * - map look-alikes (0/O, 1/l/I, etc.) for codes
  */
+/**
+ * Normalize text for comparison:
+ * - lowercase
+ * - strip accents (NFD + remove combining marks)
+ * - remove whitespace, dashes, underscores, dots, zero-width chars
+ * - map look-alikes (0/O, 1/l/I, etc.) for codes
+ */
 export function normalize(text: string, forCode = false): string {
-  let result = text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // strip combining diacritical marks
-    .replace(/[\s\-_.​-‏﻿]/g, ''); // whitespace, dashes, underscores, dots, zero-width
+  let result = text.toLowerCase().normalize('NFD');
+  // strip combining diacritical marks
+  result = result.replace(/[̀-ͯ]/g, '');
+  // whitespace, dashes, underscores, dots
+  result = result.replace(/[\s\-_.]/g, '');
+  // zero-width characters
+  result = result.replace(/[\u200B-\u200F\uFEFF]/g, '');
 
   if (forCode) {
     // Map look-alike characters
@@ -161,13 +155,13 @@ export function redact(text: string, secret: string): string {
   const reversedSecret = normalizedSecret.split('').reverse().join('');
   const reversedSecretForCode = normalizedSecretForCode.split('').reverse().join('');
   // A secret is a "code" if it contains digits (codes/numbers have digits, words don't)
-const forCode = /[0-9]/.test(secret);
+  const forCode = /[0-9]/.test(secret);
 
   let result = text;
 
   // 1. Direct match (case-insensitive) - for codes, exact match; for words, word boundaries
   if (!forCode) {
-    const wordBoundaryRegex = new RegExp(`\\b${escapeRegex(secret)}\\b`, 'gi');
+    const wordBoundaryRegex = new RegExp('\\b' + escapeRegex(secret) + '\\b', 'gi');
     result = result.replace(wordBoundaryRegex, '[REDACTED]');
   } else {
     const directRegex = new RegExp(escapeRegex(secret), 'gi');
@@ -183,15 +177,12 @@ const forCode = /[0-9]/.test(secret);
 
   // 3. Per-line (one char per line) - only for codes
   if (forCode) {
-    const lightlyNormalized = text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '');
     const perLinePattern = normalizedSecret.split('').join('\\s*\\n\\s*');
     const perLineRegex = new RegExp(perLinePattern, 'giu');
     result = result.replace(perLineRegex, '[REDACTED]');
 
     // Per-line with look-alike mapping for codes
+    const normalizedSecretForCode = normalize(secret, true);
     if (normalizedSecretForCode !== normalizedSecret) {
       const perLineCodePattern = normalizedSecretForCode.split('').join('\\s*\\n\\s*');
       const perLineCodeRegex = new RegExp(perLineCodePattern, 'giu');
@@ -201,15 +192,12 @@ const forCode = /[0-9]/.test(secret);
 
   // 4. Spaced (chars separated by spaces or punctuation) - only for codes
   if (forCode) {
-    const lightlyNormalized = text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '');
     const spacedPattern = normalizedSecret.split('').join('[\\s\\p{P}]*');
     const spacedRegex = new RegExp(spacedPattern, 'giu');
     result = result.replace(spacedRegex, '[REDACTED]');
 
     // Spaced with look-alike mapping for codes
+    const normalizedSecretForCode = normalize(secret, true);
     if (normalizedSecretForCode !== normalizedSecret) {
       const spacedCodePattern = normalizedSecretForCode.split('').join('[\\s\\p{P}]*');
       const spacedCodeRegex = new RegExp(spacedCodePattern, 'giu');
@@ -217,21 +205,19 @@ const forCode = /[0-9]/.test(secret);
     }
   }
 
-  // 5. Reversed (without look-alike mapping) - only for codes
-  if (forCode) {
-    const reversedRegex = new RegExp(escapeRegex(reversedSecret), 'gi');
-    result = result.replace(reversedRegex, '[REDACTED]');
+  // 5. Reversed (without look-alike mapping)
+  const reversedRegex = new RegExp(escapeRegex(reversedSecret), 'gi');
+  result = result.replace(reversedRegex, '[REDACTED]');
 
-    // Reversed (with look-alike mapping for codes)
-    if (reversedSecretForCode !== reversedSecret) {
-      const reversedCodeRegex = new RegExp(escapeRegex(reversedSecretForCode), 'gi');
-      result = result.replace(reversedCodeRegex, '[REDACTED]');
-    }
+  // Reversed (with look-alike mapping for codes)
+  if (reversedSecretForCode !== reversedSecret) {
+    const reversedCodeRegex = new RegExp(escapeRegex(reversedSecretForCode), 'gi');
+    result = result.replace(reversedCodeRegex, '[REDACTED]');
   }
 
   // 6. Normalized match - for word secrets, use word boundaries
   if (!forCode) {
-    const normalizedWordRegex = new RegExp(`\\b${escapeRegex(normalizedSecret)}\\b`, 'gi');
+    const normalizedWordRegex = new RegExp('\\b' + escapeRegex(normalizedSecret) + '\\b', 'gi');
     result = result.replace(normalizedWordRegex, '[REDACTED]');
   } else {
     const normalizedRegex = new RegExp(escapeRegex(normalizedSecret), 'gi');
@@ -239,10 +225,15 @@ const forCode = /[0-9]/.test(secret);
   }
 
   // Normalized match (with look-alike mapping for codes)
-  if (forCode && normalizedSecretForCode !== normalizedSecret) {
-    const normalizedCodeRegex = new RegExp(escapeRegex(normalizedSecretForCode), 'gi');
+  const normalizedSecretForCode2 = normalize(secret, true);
+  if (forCode && normalizedSecretForCode2 !== normalizedSecret) {
+    const normalizedCodeRegex = new RegExp(escapeRegex(normalizedSecretForCode2), 'gi');
     result = result.replace(normalizedCodeRegex, '[REDACTED]');
   }
+
+  // 7. Whole-word match for word secrets - don't redact partial words
+  // This is handled by not doing word-boundary replacement for non-codes
+  // The direct match already handles exact matches
 
   return result;
 }
@@ -256,11 +247,12 @@ function escapeRegex(str: string): string {
 
 /**
  * Build regex pattern for spelled-out letter detection.
- * e.g., "VAULT" -> "v.*as.*in.*victor.*a.*as.*in.*alpha.*u.*as.*in.*uniform.*l.*as.*in.*lima.*t.*as.*in.*tango"
+ * e.g., "VAULT" -> "v as in victor|v|a as in alpha|a|u as in uniform|u|l as in lima|l|t as in tango|t"
  * Only matches when letter words like "as in Victor" are explicitly used.
  */
 function buildSpelledOutPattern(secret: string): string {
   // Use the original secret characters (without look-alike mapping) for spelled-out detection
+  // Remove only non-alphanumeric characters for pattern building
   const chars = secret.replace(/[^A-Za-z0-9]/g, '');
   const parts: string[] = [];
 
@@ -270,7 +262,7 @@ function buildSpelledOutPattern(secret: string): string {
       // Match "V as in Victor" or "Victor" - but NOT just "V" alone
       // Require at least the word or "as in" phrase
       const wordPattern = words.map(escapeRegex).join('|');
-      parts.push(`(?:${wordPattern})`);
+      parts.push('(?:' + wordPattern + ')');
     } else {
       // For digits, just match the digit
       parts.push(escapeRegex(char));
@@ -278,7 +270,6 @@ function buildSpelledOutPattern(secret: string): string {
   }
 
   // Require word boundaries or separators between letters
-  // This prevents matching "V A U L T" as spaced
   return parts.join('(?:\\s+|\\p{P}+)');
 }
 
@@ -306,10 +297,42 @@ export function plainLeakCheck(secret: string, text: string): LeakResult | null 
   const normalizedSecretNoCode = normalize(secret, false);
   const normalizedText = normalize(text, true);
   const normalizedTextNoCode = normalize(text, false);
-  // A secret is a "code" if it contains digits (codes/numbers have digits, words don't)
-const forCode = /[0-9]/.test(secret);
+  const forCode = /[0-9]/.test(secret);
   const reversedSecret = normalizedSecret.split('').reverse().join('');
   const reversedSecretNoCode = normalizedSecretNoCode.split('').reverse().join('');
+
+  if (!forCode) {
+    const directMatch = matchWholeWordPattern(text, escapeRegex(secret));
+    if (directMatch) {
+      return { type: 'direct', matchedText: directMatch[0], index: directMatch.index ?? 0 };
+    }
+
+    const normalizedPattern = normalizedSecretNoCode.split('').map(escapeRegex).join('[\\s\\-_.]*');
+    const normalizedMatch = matchWholeWordPattern(text, normalizedPattern);
+    if (normalizedMatch) {
+      return { type: 'normalized', matchedText: normalizedMatch[0], index: normalizedMatch.index ?? 0 };
+    }
+
+    const reversedPattern = reversedSecretNoCode.split('').map(escapeRegex).join('[\\s\\-_.]*');
+    const reversedMatch = matchWholeWordPattern(text, reversedPattern);
+    if (reversedMatch) {
+      return { type: 'reversed', matchedText: reversedMatch[0], index: reversedMatch.index ?? 0 };
+    }
+
+    const perLinePattern = normalizedSecretNoCode.split('').map(escapeRegex).join('\\s*\\n\\s*');
+    const perLineMatch = matchWholeWordPattern(text, perLinePattern);
+    if (perLineMatch) {
+      return { type: 'per-line', matchedText: perLineMatch[0], index: perLineMatch.index ?? 0 };
+    }
+
+    const spacedPattern = normalizedSecretNoCode.split('').map(escapeRegex).join('[\\s\\p{P}]*');
+    const spacedMatch = matchWholeWordPattern(text, spacedPattern);
+    if (spacedMatch) {
+      return { type: 'spaced', matchedText: spacedMatch[0], index: spacedMatch.index ?? 0 };
+    }
+
+    return null;
+  }
 
   // 1. Direct match (case-insensitive) - check original text
   const directMatch = text.match(new RegExp(escapeRegex(secret), 'i'));
@@ -370,21 +393,21 @@ const forCode = /[0-9]/.test(secret);
     return { type: 'reversed', matchedText: revMatchNoCode[0], index: revMatchNoCode.index ?? 0 };
   }
 
-  // 9. Normalized match - check fully normalized text (with look-alike mapping)
+  // 8. Normalized match - check fully normalized text (with look-alike mapping)
   const normMatch = normalizedText.match(new RegExp(escapeRegex(normalizedSecret)));
   if (normMatch) {
     return { type: 'normalized', matchedText: normMatch[0], index: normMatch.index ?? 0 };
   }
 
-  // 10. Normalized match - without look-alike mapping
+  // 9. Normalized match - without look-alike mapping
   const normMatchNoCode = normalizedTextNoCode.match(new RegExp(escapeRegex(normalizedSecretNoCode)));
   if (normMatchNoCode) {
     return { type: 'normalized', matchedText: normMatchNoCode[0], index: normMatchNoCode.index ?? 0 };
   }
 
-  // 11. Whole-word match (for words) - check normalized text without look-alike mapping
+  // 10. Whole-word match (for words) - check normalized text without look-alike mapping
   if (!forCode) {
-    const wordRegex = new RegExp(`\\b${escapeRegex(normalizedSecretNoCode)}\\b`, 'u');
+    const wordRegex = new RegExp('\\b' + escapeRegex(normalizedSecretNoCode) + '\\b', 'u');
     const wordMatch = normalizedTextNoCode.match(wordRegex);
     if (wordMatch) {
       return { type: 'whole-word', matchedText: wordMatch[0], index: wordMatch.index ?? 0 };
@@ -392,4 +415,9 @@ const forCode = /[0-9]/.test(secret);
   }
 
   return null;
+}
+
+function matchWholeWordPattern(text: string, tokenPattern: string): RegExpMatchArray | null {
+  const pattern = `(?<![\\p{L}\\p{N}_])(?:${tokenPattern})(?![\\p{L}\\p{N}_])`;
+  return text.match(new RegExp(pattern, 'iu'));
 }
