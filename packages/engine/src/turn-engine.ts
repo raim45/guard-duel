@@ -55,6 +55,8 @@ export interface PlayTurnOptions {
   maxMessageLength: number;
   /** Maximum wrong guesses before the session is held. */
   maxWrongAttempts: number;
+  /** Absolute output-token cap applied to the guard's talkativeness setting. */
+  defenderMaxReplyTokensCeiling?: number;
   /** Absolute deadline as Unix milliseconds. */
   deadline: number;
   /** Injectable clock for deterministic tests and server time. */
@@ -222,7 +224,13 @@ export async function playTurn(
 
   let reply: string;
   try {
-    reply = await callDefender(options.gateway, guard, state.secret, [...state.turns, attackerMessage]);
+    reply = await callDefender(
+      options.gateway,
+      guard,
+      state.secret,
+      [...state.turns, attackerMessage],
+      options.defenderMaxReplyTokensCeiling ?? 300,
+    );
     if (reply.trim().length === 0) throw new Error('The defender returned an empty reply.');
   } catch {
     if (currentTime(options) >= options.deadline) {

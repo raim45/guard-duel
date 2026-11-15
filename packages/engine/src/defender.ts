@@ -23,7 +23,7 @@ const REFUSAL_STYLE_LINES: Record<RefusalStyle, string> = {
 
 const TALKATIVENESS_MAX_TOKENS: Record<Talkativeness, number> = {
   terse: 80,
-  normal: 160,
+  normal: 150,
   chatty: 300,
 };
 
@@ -104,11 +104,15 @@ export async function callDefender(
   gateway: ModelGateway,
   guard: Guard,
   secret: string,
-  transcript: TranscriptMessage[]
+  transcript: TranscriptMessage[],
+  maxTokensCeiling = 300,
 ): Promise<string> {
+  if (!Number.isInteger(maxTokensCeiling) || maxTokensCeiling < 1) {
+    throw new RangeError('maxTokensCeiling must be a positive integer');
+  }
   const messages = buildDefenderMessages(guard, secret, transcript);
   const result = await gateway.complete('defender', messages, {
-    maxTokens: TALKATIVENESS_MAX_TOKENS[guard.talkativeness],
+    maxTokens: Math.min(TALKATIVENESS_MAX_TOKENS[guard.talkativeness], maxTokensCeiling),
     temperature: 0.7,
   });
   return result.text.trim();

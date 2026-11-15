@@ -86,7 +86,17 @@ describe('defender', () => {
       );
     }
 
-    expect(complete.mock.calls.map(([, , options]) => options?.maxTokens)).toEqual([80, 160, 300]);
+    expect(complete.mock.calls.map(([, , options]) => options?.maxTokens)).toEqual([80, 150, 300]);
+  });
+
+  it('applies the server reply-token ceiling', async () => {
+    const gateway = createDefaultMockGateway();
+    const complete = vi.spyOn(gateway, 'complete');
+    const chattyGuard = GuardSchema.parse({ ...guard, talkativeness: 'chatty' });
+
+    await callDefender(gateway, chattyGuard, 'R7QX2K9M4P', [], 240);
+
+    expect(complete.mock.calls[0]?.[2]?.maxTokens).toBe(240);
   });
 
   it('validates leak flags by turn and plain leak check method', () => {

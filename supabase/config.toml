@@ -3,3 +3,33 @@ project_id = "your-project-ref"
 [functions]
   # Smoke test function for gateway verification
   smoke-test = { verify_jwt = false }
+
+[functions.guard-create]
+import_map = "./functions/guard-create/import_map.json"
+
+[functions.guard-list-mine]
+import_map = "./functions/guard-list-mine/import_map.json"
+
+[functions.guard-publish]
+import_map = "./functions/guard-publish/import_map.json"
+
+[functions.guard-browse]
+import_map = "./functions/guard-browse/import_map.json"
+
+[functions.attack-start]
+import_map = "./functions/attack-start/import_map.json"
+
+[functions.attack-message]
+import_map = "./functions/attack-message/import_map.json"
+
+[functions.attack-guess]
+import_map = "./functions/attack-guess/import_map.json"
+
+[functions.attack-result]
+import_map = "./functions/attack-result/import_map.json"
+
+[functions.owner-sessions]
+import_map = "./functions/owner-sessions/import_map.json"
+
+[functions.report-create]
+import_map = "./functions/report-create/import_map.json"

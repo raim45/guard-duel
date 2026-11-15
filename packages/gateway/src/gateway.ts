@@ -74,8 +74,13 @@ export class Gateway implements ModelGateway {
   private readonly modelConfig: ModelConfig;
   private readonly usageLog: UsageRecord[] = [];
   private readonly usageLogPath: string;
+  private readonly resolveApiKey: (name: string) => string | undefined;
 
-  constructor(modelConfig: ModelConfig, usageLogPath = 'usage.jsonl') {
+  constructor(
+    modelConfig: ModelConfig,
+    usageLogPath = 'usage.jsonl',
+    resolveApiKey: (name: string) => string | undefined = (name) => process.env[name],
+  ) {
     // Validate that all required roles have at least one provider
     const requiredRoles: Role[] = ['defender', 'attacker', 'analyst'];
     for (const role of requiredRoles) {
@@ -86,6 +91,7 @@ export class Gateway implements ModelGateway {
     }
     this.modelConfig = modelConfig;
     this.usageLogPath = usageLogPath;
+    this.resolveApiKey = resolveApiKey;
   }
 
   /**
@@ -110,7 +116,7 @@ export class Gateway implements ModelGateway {
     for (let i = 0; i < providers.length; i++) {
       // providers[i] is guaranteed to exist because i < providers.length
       const provider = providers[i]!;
-      const apiKey = process.env[provider.apiKeyEnv];
+      const apiKey = this.resolveApiKey(provider.apiKeyEnv);
 
       if (!apiKey) {
         const err = new ProviderError(

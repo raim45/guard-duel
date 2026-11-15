@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "types": [],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "baseUrl": "../..",
+    "paths": {
+      "@guard-duel/engine": ["packages/engine/dist/index.d.ts"],
+      "@guard-duel/gateway": ["packages/gateway/dist/index.d.ts"]
+    }
+  },
+  "include": ["./**/*.ts", "./deno.d.ts"],
+  "exclude": ["./smoke-test"]
+}
