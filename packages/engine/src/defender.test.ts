@@ -1,6 +1,7 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { createDefaultMockGateway } from '@guard-duel/gateway';
-import { buildDefenderMessages, callDefender } from './defender.js';
+import { buildDefenderMessages, callDefender, DEFENDER_PROMPT_TEMPLATE } from './defender.js';
 import { GuardSchema, LeakFlagSchema } from './schemas.js';
 
 const guard = GuardSchema.parse({
@@ -21,6 +22,11 @@ const guard = GuardSchema.parse({
 });
 
 describe('defender', () => {
+  it('keeps the portable runtime template identical to the approved prompt file', () => {
+    const promptFile = readFileSync(new URL('../../../docs/prompts/defender.md', import.meta.url), 'utf-8').trimEnd();
+    expect(DEFENDER_PROMPT_TEMPLATE).toBe(promptFile);
+  });
+
   it('puts the secret once in the system message and includes only supplied history', () => {
     const messages = buildDefenderMessages(guard, 'R7QX2K9M4P', [
       {
