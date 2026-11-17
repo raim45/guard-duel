@@ -10,9 +10,9 @@ const labels: Record<StampKind, string> = {
 };
 
 /** A physical stamp: the only place the interface sets text in capitals. */
-export function Stamp({ kind, className }: { kind: StampKind; className?: string }) {
+export function Stamp({ kind, size = 'lg', className }: { kind: StampKind; size?: 'lg' | 'sm'; className?: string }) {
   return (
-    <span className={cx('stamp', `stamp-${kind}`, className)}>
+    <span className={cx('stamp', `stamp-${kind}`, size === 'sm' && 'stamp-sm', className)}>
       <span className="stamp-inner t-stamp">{labels[kind]}</span>
     </span>
   );

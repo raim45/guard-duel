@@ -1,5 +1,5 @@
 import { createAvatar } from '@dicebear/core';
-import { botttsNeutral } from '@dicebear/collection';
+import * as botttsNeutral from '@dicebear/bottts-neutral';
 
 export type AvatarMood = 'idle' | 'thinking' | 'talking' | 'cracked' | 'held';
 

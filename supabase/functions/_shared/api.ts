@@ -309,7 +309,7 @@ async function guardPublish(request: Request, user: User, db: DbLike): Promise<u
   return { guard: { ...rows[0], owner_id: undefined } };
 }
 
-async function guardBrowse(request: Request, callerDb: DbLike): Promise<unknown> {
+async function guardBrowse(request: Request, callerDb: DbLike, db: DbLike): Promise<unknown> {
   const url = new URL(request.url);
   const lockType = url.searchParams.get('lockType') ?? 'all';
   const sort = url.searchParams.get('sort') ?? 'freshest';
@@ -348,7 +348,21 @@ async function guardBrowse(request: Request, callerDb: DbLike): Promise<unknown>
     averageSurvivalPicks: row.average_survival_picks,
     postedAt: row.posted_at,
   }));
-  return { items, total: result.totalCount ?? items.length, page, pageSize: size };
+  const config = await settings(db);
+  return {
+    items,
+    total: result.totalCount ?? items.length,
+    page,
+    pageSize: size,
+    attacksEnabled: config.human_attacks_enabled,
+    limits: {
+      picks: config.max_messages_per_session,
+      patrolSeconds: config.session_time_limit_seconds,
+      wrongAttempts: config.max_wrong_attempts,
+      cooldownSeconds: config.cooldown_seconds,
+      maxMessageLength: config.max_message_length,
+    },
+  };
 }
 
 function formatHint(keyType: Guard['keyType']): string {
@@ -663,6 +677,7 @@ async function attackResult(request: Request, user: User, db: DbLike): Promise<u
   return {
     sessionId: session.id,
     outcome: session.end_reason,
+    guard: { id: guard.id, name: guard.name, lookSeed: guard.look_seed, lockType: guard.lock_type },
     picksUsed: session.picks_used,
     wrongGuesses: session.wrong_guesses,
     secondsUsed: Math.max(0, Math.ceil(((Date.parse(session.ended_at ?? new Date().toISOString())) - Date.parse(session.started_at)) / 1000)),
@@ -795,7 +810,7 @@ export function serveFunction(name: HandlerName): void {
         case 'guard-create': response = await guardCreate(request, auth.user, auth.db); break;
         case 'guard-list-mine': response = await guardListMine(auth.user, auth.db, auth.callerDb); break;
         case 'guard-publish': response = await guardPublish(request, auth.user, auth.db); break;
-        case 'guard-browse': response = await guardBrowse(request, auth.callerDb); break;
+        case 'guard-browse': response = await guardBrowse(request, auth.callerDb, auth.db); break;
         case 'attack-start': response = await attackStart(request, auth.user, auth.db); break;
         case 'attack-message': response = await attackMessage(request, auth.user, auth.db); break;
         case 'attack-guess': response = await attackGuess(request, auth.user, auth.db); break;

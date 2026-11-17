@@ -35,15 +35,19 @@ export interface TranscriptViewerProps {
  */
 export function TranscriptViewer({ turns, leakFlags = [], wardenSeed, wardenName, focusTurn, label = 'Transcript', className }: TranscriptViewerProps) {
   const focusRef = useRef<HTMLDivElement>(null);
+  const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    focusRef.current?.scrollIntoView({ block: 'center' });
+    // Scroll only the transcript, never the page around it.
+    const box = container.current;
+    const target = focusRef.current;
+    if (box && target) box.scrollTop = Math.max(0, target.offsetTop - box.clientHeight / 2 + target.clientHeight / 2);
   }, [focusTurn]);
 
   const flagFor = (turn: number) => leakFlags.find((flag) => flag.turn === turn);
 
   return (
-    <div className={cx('inset chat-log flex min-h-0 flex-col gap-3', className)} role="region" aria-label={label} tabIndex={0}>
+    <div ref={container} className={cx('inset chat-log relative flex min-h-0 flex-col gap-3', className)} role="region" aria-label={label} tabIndex={0}>
       {turns.length === 0 && <p className="t-body text-chalk-dim">No messages were sent in this heist.</p>}
       {turns.map((turn) => {
         if (turn.role === 'attacker') {

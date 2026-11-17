@@ -62,13 +62,20 @@ export function Composer({
     return () => window.clearTimeout(timer);
   }, [cooldownEnd]);
 
+  // Grow the field from 1 to 5 lines, and refit when its width changes.
   useLayoutEffect(() => {
     const node = field.current;
     if (!node) return;
-    node.style.height = 'auto';
-    const max = MAX_LINES * LINE_HEIGHT + FIELD_PADDING + 6;
-    node.style.height = `${Math.min(Math.max(node.scrollHeight + 6, 48), max)}px`;
-    node.style.overflowY = node.scrollHeight + 6 > max ? 'auto' : 'hidden';
+    const fit = () => {
+      node.style.height = 'auto';
+      const max = MAX_LINES * LINE_HEIGHT + FIELD_PADDING + 6;
+      node.style.height = `${Math.min(Math.max(node.scrollHeight + 6, 48), max)}px`;
+      node.style.overflowY = node.scrollHeight + 6 > max ? 'auto' : 'hidden';
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(node);
+    return () => observer.disconnect();
   }, [value]);
 
   const blocked = disabled || cooling;
@@ -91,8 +98,8 @@ export function Composer({
 
   return (
     <div className={cx('flex flex-col gap-1', className)}>
-      <div className="flex items-end gap-3">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-[220px] flex-1">
           <label htmlFor="composer-message" className="sr-only">Message to the Warden</label>
           <textarea
             id="composer-message"
@@ -107,6 +114,7 @@ export function Composer({
             className="composer-input inset"
           />
         </div>
+        <div className="ml-auto flex flex-none items-end gap-3">
         {secondaryAction}
         <span className="relative inline-flex flex-none">
           {cooling && (
@@ -121,6 +129,7 @@ export function Composer({
           )}
           <Button size="lg" disabled={!canSend} onClick={send}>Send</Button>
         </span>
+        </div>
       </div>
       <div className="flex min-h-5 items-start justify-between gap-3 px-1">
         <p className="t-small text-chalk-dim">{note ?? ''}</p>

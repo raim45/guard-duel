@@ -14,3 +14,5 @@ export { Skeleton } from './Skeleton';
 export { EmptyState } from './EmptyState';
 export { AppToaster, ToastCard, notify } from './Toast';
 export type { ToastKind } from './Toast';
+export { Switch, Slider } from './Controls';
+export { Field } from './Field';

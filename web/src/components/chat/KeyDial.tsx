@@ -33,9 +33,10 @@ export function KeyDial({ open, onOpenChange, lockType, keyLength, attemptsTotal
   const [value, setValue] = useState('');
   const slotted = keyLength !== null && lockType !== 'passphrase';
 
+  // Start empty when opened, and clear the entry after a wrong guess uses an attempt.
   useEffect(() => {
     if (open) setValue('');
-  }, [open]);
+  }, [open, attemptsLeft]);
 
   const complete = slotted ? value.length === keyLength : value.trim().length > 0;
 

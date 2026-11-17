@@ -10,6 +10,8 @@ export interface PanelProps extends Omit<HTMLAttributes<HTMLElement>, 'title'> {
   /** Optional icon at the left of the title row. */
   icon?: ReactNode;
   as?: 'div' | 'section' | 'article';
+  /** Heading level of the title. Use 2 when the panel sits directly under the page title. */
+  titleLevel?: 2 | 3;
 }
 
 const frame: Record<PanelVariant, string> = {
@@ -18,7 +20,8 @@ const frame: Record<PanelVariant, string> = {
   paper: 'paper',
 };
 
-export function Panel({ variant = 'raised', title, icon, as: Tag = 'div', className, children, ...rest }: PanelProps) {
+export function Panel({ variant = 'raised', title, icon, as: Tag = 'div', titleLevel = 3, className, children, ...rest }: PanelProps) {
+  const Heading = titleLevel === 2 ? 'h2' : 'h3';
   return (
     <Tag {...rest} className={cx(frame[variant], variant === 'raised' && 'panel-frame', className)}>
       {variant === 'raised' && (
@@ -26,10 +29,10 @@ export function Panel({ variant = 'raised', title, icon, as: Tag = 'div', classN
       )}
       <div className="panel-pad">
         {title ? (
-          <h3 className="t-h3 mb-3 flex items-center gap-2">
+          <Heading className="t-h3 mb-3 flex items-center gap-2">
             {icon ? <span aria-hidden="true" className="inline-flex">{icon}</span> : null}
             {title}
-          </h3>
+          </Heading>
         ) : null}
         {children}
       </div>

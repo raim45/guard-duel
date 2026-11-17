@@ -199,6 +199,9 @@ test('hosted Stage 6 API enforces limits, wins by guess and expires sessions', a
   });
   assert.ok(board.items.some((guard) => guard.id === guardA));
   assert.equal(board.pageSize, 24);
+  assert.equal(board.attacksEnabled, true);
+  assert.equal(board.limits.picks, 12);
+  assert.equal(board.limits.wrongAttempts, 3);
   assert.equal(Object.hasOwn(board.items[0], 'instructions'), false);
   assert.equal(Object.hasOwn(board.items[0], 'owner_id'), false);
   const report = await expectApi('report-create', {
@@ -297,6 +300,8 @@ test('hosted Stage 6 API enforces limits, wins by guess and expires sessions', a
   const result = await expectApi('attack-result', { token: attacker.token, body: { sessionId: cracked.sessionId } });
   assert.equal(result.key, secret);
   assert.equal(result.wrongGuesses, 0);
+  assert.equal(result.guard.id, guardB);
+  assert.equal(Object.hasOwn(result.guard, 'instructions'), false);
   assert.ok(result.orders, 'the winner receives orders after a correct guess');
   const ownerSessions = await expectApi('owner-sessions', {
     token: owner.token, method: 'GET', query: `?guardId=${guardB}`,
