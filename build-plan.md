@@ -88,7 +88,7 @@ Goal: choose a defender model with a usable plain-request baseline and record ho
 
 Done when: the baseline and hand-attack results are recorded, a defender model is chosen, and tests show the secret appears only in the system message and history holds only this session's turns.
 
-Design inputs: design-doc Screen 3 (Forge fields and validation), Screen 5 (guard prompt behavior and key-format hint), and Screen 6/7 (owner-only plain-leak flags). Use one polite, stern, playful or cryptic refusal example as defined in Screen 3. Talkativeness caps are Terse 80, Normal 150 and Chatty 300 output tokens.
+Design inputs: design-doc Screen 3 (Forge fields and validation), Screen 5 (guard prompt behavior and key-format hint), and Screen 6/7 (owner-only plain-leak flags). Refusal styles (polite, stern, playful, cryptic) are described in words in the defender prompt, never as a quoted example sentence, because the model copies a quoted example word for word. The Forge still shows the Screen 3 example lines to the player. Talkativeness caps are Terse 80, Normal 150 and Chatty 300 output tokens.
 
 ### Stage 4: Turn engine
 
