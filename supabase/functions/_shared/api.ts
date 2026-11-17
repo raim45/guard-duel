@@ -472,6 +472,7 @@ async function saveTurnResult(
   db: DbLike,
   session: SessionRow,
   originalTurnCount: number,
+  originalFlagCount: number,
   state: SessionState,
   winningGuess?: string,
 ): Promise<void> {
@@ -485,7 +486,7 @@ async function saveTurnResult(
       created_at: turn.timestamp,
     })));
   }
-  const newFlags = state.leakFlags.slice(session.picks_used);
+  const newFlags = state.leakFlags.slice(originalFlagCount);
   if (newFlags.length > 0) {
     await db.insert('leak_flags', newFlags.map((flag) => ({
       session_id: session.id,
@@ -574,7 +575,7 @@ async function attackMessage(request: Request, user: User, db: DbLike): Promise<
     const success = !result.events.some((event) => event.type === 'turn_errored');
     if (result.reply !== null || !success) await usageLog(db, user.id, session.id, gateway, success);
     if (!result.events.some((event) => event.type === 'turn_errored') || result.state.status === 'ended') {
-      await saveTurnResult(db, session, turns.length, result.state);
+      await saveTurnResult(db, session, turns.length, leakRows.rows.length, result.state);
     }
     return {
       reply: result.reply,
@@ -615,7 +616,7 @@ async function attackGuess(request: Request, user: User, db: DbLike): Promise<un
       defenderMaxReplyTokensCeiling: config.defender_max_reply_tokens_ceiling,
       deadline: Date.parse(session.started_at) + config.session_time_limit_seconds * 1000,
     });
-    await saveTurnResult(db, session, turns.length, result.state, body.guess);
+    await saveTurnResult(db, session, turns.length, leakRows.rows.length, result.state, body.guess);
     return {
       correct: result.events.some((event) => event.type === 'guess_correct'),
       ended: result.ended,
