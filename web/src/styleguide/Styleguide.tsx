@@ -17,6 +17,7 @@ import {
   ToastCard,
   notify,
 } from '../components/ui';
+import { GameSections } from './GameSections';
 import type { ButtonSize, ButtonVariant } from '../components/ui';
 
 const palette = [
@@ -86,7 +87,7 @@ export function Styleguide() {
   return (
     <main className="mx-auto w-full max-w-[1200px] px-4 py-8 md:px-6">
       <h1 className="t-h1">Styleguide</h1>
-      <p className="t-body text-chalk-dim">Phases D0 and D1: tokens, type, atmosphere and primitives.</p>
+      <p className="t-body text-chalk-dim">Phases D0 to D2: tokens, type, atmosphere, primitives and game parts.</p>
 
       <Section id="sg-palette" title="Palette">
         <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -216,6 +217,7 @@ export function Styleguide() {
         <Panel>
           <Tabs
             label="Sort the Board"
+            hasPanels
             value={tab}
             onValueChange={setTab}
             items={[
@@ -296,6 +298,7 @@ export function Styleguide() {
           />
         </Panel>
       </Section>
+      <GameSections />
     </main>
   );
 }

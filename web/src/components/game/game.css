@@ -1,0 +1,120 @@
+/* ---------- Picks meter ---------- */
+.pick { flex: none; }
+.pick-ready { fill: var(--color-brass); stroke: var(--color-ink); stroke-width: 1.8px; }
+.pick-spent {
+  fill: none;
+  stroke: var(--color-chalk-dim);
+  stroke-width: 1.6px;
+  opacity: 0.4;
+  transform: rotate(-25deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.picks-bar {
+  width: 220px;
+  max-width: 100%;
+  height: 16px;
+  overflow: hidden;
+  background: var(--color-world-deep);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-chip);
+}
+.picks-bar-fill { height: 100%; background: var(--color-brass); }
+
+/* ---------- Patrol timer ---------- */
+.patrol {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 4px 10px;
+  color: var(--color-chalk);
+  background: var(--color-world-deep);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-chip);
+  box-shadow: inset 0 3px 0 rgba(12, 36, 48, 0.55);
+}
+.patrol-time { font-family: var(--font-display); font-size: 24px; line-height: 28px; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.patrol-warning { color: var(--color-brass); }
+.patrol-alarm { color: var(--color-ink); background: var(--color-coral); box-shadow: none; }
+.lamp-pulse { animation: lamp-pulse 1s ease-in-out infinite; }
+@keyframes lamp-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(1.15); } }
+
+/* ---------- Attempts pips ---------- */
+.pip-disc { fill: var(--color-brass); stroke: var(--color-ink); stroke-width: 2; }
+.pip[data-spent] .pip-disc { fill: var(--color-world-deep); stroke: var(--color-coral); }
+.pip-crack { fill: none; stroke: var(--color-coral); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Ward charm ---------- */
+.ward {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 2px;
+  min-width: 160px;
+  min-height: 96px;
+  padding: 12px;
+  text-align: left;
+  color: var(--color-chalk);
+  background: var(--color-plate);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-raised-sm);
+  cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ward-icon { display: inline-flex; width: 32px; height: 32px; }
+.ward-name { font-family: var(--font-display); font-size: 18px; line-height: 24px; letter-spacing: 0.01em; }
+@media (hover: hover) and (pointer: fine) {
+  .ward:hover:not(.ward-on):not(:disabled) { background: var(--color-plate-hi); }
+}
+.ward-on {
+  color: var(--color-ink);
+  background: var(--color-brass);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 0 0 var(--color-ink), var(--shadow-glow-brass);
+}
+.ward:disabled { color: var(--color-chalk-dim); box-shadow: none; cursor: not-allowed; }
+
+/* ---------- Lock type card ---------- */
+.lock-card {
+  position: relative;
+  display: block;
+  padding: 12px 16px 16px;
+  color: var(--color-chalk);
+  background: var(--color-plate);
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-raised-sm);
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .lock-card:hover:not(.lock-card-on) { background: var(--color-plate-hi); }
+}
+.lock-card:has(input:focus-visible) { outline: 3px solid var(--color-sky); outline-offset: 3px; }
+.lock-card-on { color: var(--color-ink); background: var(--color-brass); }
+.lock-check {
+  display: inline-flex;
+  padding: 2px;
+  color: var(--color-ink);
+  background: var(--color-chalk);
+  border: 2px solid var(--color-ink);
+  border-radius: 8px;
+  transform: rotate(-6deg);
+}
+.lock-ticket {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 2px 12px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--color-ink);
+  background: var(--color-chalk);
+  border: 2px dashed var(--color-ink);
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp-pulse { animation: none; }
+  .ward { transition: none; }
+}

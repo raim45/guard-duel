@@ -2,6 +2,7 @@
 @import "@fontsource/lilita-one";
 @import "@fontsource-variable/nunito";
 @import "./components/ui/ui.css";
+@import "./components/game/game.css";
 
 @theme {
   --color-ink: #0c2430;

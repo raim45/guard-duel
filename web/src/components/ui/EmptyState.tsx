@@ -1,4 +1,4 @@
-import { VaultDoorStatic } from '../vault/VaultDoorStatic';
+import { VaultDoor } from '../vault/VaultDoor';
 import { Button } from './Button';
 
 export interface EmptyStateProps {
@@ -12,7 +12,7 @@ export interface EmptyStateProps {
 export function EmptyState({ title, body, actionLabel, onAction }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-      <VaultDoorStatic ajar size={160} label="Vault door, ajar" />
+      <VaultDoor state="ajar" size={160} label="Vault door" />
       <h3 className="t-h3 mt-2">{title}</h3>
       <p className="t-body max-w-[44ch] text-chalk-dim">{body}</p>
       <Button className="mt-2" onClick={onAction}>{actionLabel}</Button>
