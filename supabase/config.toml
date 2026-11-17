@@ -28,6 +28,9 @@ import_map = "./functions/attack-guess/import_map.json"
 [functions.attack-result]
 import_map = "./functions/attack-result/import_map.json"
 
+[functions.attack-state]
+import_map = "./functions/attack-state/import_map.json"
+
 [functions.owner-sessions]
 import_map = "./functions/owner-sessions/import_map.json"
 

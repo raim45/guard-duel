@@ -664,12 +664,62 @@ async function attackResult(request: Request, user: User, db: DbLike): Promise<u
     sessionId: session.id,
     outcome: session.end_reason,
     picksUsed: session.picks_used,
+    wrongGuesses: session.wrong_guesses,
     secondsUsed: Math.max(0, Math.ceil(((Date.parse(session.ended_at ?? new Date().toISOString())) - Date.parse(session.started_at)) / 1000)),
     key: secretRow.secret,
     winningGuess: session.winning_guess,
     orders: ownerOrders || (isAttacker && cracked) ? guard.instructions : null,
     transcript: turns.map((turn) => ({ role: turn.role, content: turn.content, turn: turn.turn_index, timestamp: turn.created_at })),
     leakFlags: ownerOrders ? await db.select<LeakFlagRow>('leak_flags', { select: 'turn_index,method,matched_text,char_index', session_id: `eq.${session.id}` }).then((rows) => rows.rows.map((flag) => ({ turn: flag.turn_index, method: flag.method, matchedText: flag.matched_text, index: flag.char_index }))) : undefined,
+  };
+}
+
+/**
+ * Lets the attacker resume their own heist after a page reload. It returns only what
+ * that attacker has already seen: their messages, the Warden's replies and the counters.
+ * It never returns the key, the orders or leak flags.
+ */
+async function attackState(request: Request, user: User, db: DbLike): Promise<unknown> {
+  const body = await readBody(request);
+  const sessionId = parseUuid(body.sessionId, 'sessionId');
+  const config = await settings(db);
+  const session = await one<SessionRow>(db, 'sessions', { id: `eq.${sessionId}`, attacker_id: `eq.${user.id}` }, 'Heist');
+  const metrics = turnMetrics(session, config);
+  const timedOut = session.status === 'active' && metrics.serverTimeRemaining <= 0;
+  if (session.status !== 'active' || timedOut) {
+    return {
+      sessionId: session.id,
+      ended: true,
+      outcome: timedOut ? 'expired' : session.end_reason,
+      serverTime: new Date().toISOString(),
+    };
+  }
+  const [guard, turns] = await Promise.all([
+    one<GuardRow>(db, 'guards', { id: `eq.${session.guard_id}` }, 'Warden'),
+    turnRows(db, session.id),
+  ]);
+  return {
+    sessionId: session.id,
+    ended: false,
+    outcome: null,
+    guard: {
+      id: guard.id,
+      name: guard.name,
+      lookSeed: guard.look_seed,
+      lockType: guard.lock_type,
+      keyFormatHint: guard.reveal_key_format ? formatHint(guard.key_type) : null,
+    },
+    limits: {
+      picks: config.max_messages_per_session,
+      patrolSeconds: config.session_time_limit_seconds,
+      wrongAttempts: config.max_wrong_attempts,
+      cooldownSeconds: config.cooldown_seconds,
+      maxMessageLength: config.max_message_length,
+    },
+    transcript: turns.map((turn) => ({ role: turn.role, content: turn.content, turn: turn.turn_index, timestamp: turn.created_at })),
+    ...metrics,
+    startedAt: session.started_at,
+    serverTime: new Date().toISOString(),
   };
 }
 
@@ -730,7 +780,7 @@ async function reportCreate(request: Request, user: User, db: DbLike): Promise<u
   return { report: { id: rows[0]?.id, status: 'open' } };
 }
 
-type HandlerName = 'guard-create' | 'guard-list-mine' | 'guard-publish' | 'guard-browse' | 'attack-start' | 'attack-message' | 'attack-guess' | 'attack-result' | 'owner-sessions' | 'report-create';
+type HandlerName = 'guard-create' | 'guard-list-mine' | 'guard-publish' | 'guard-browse' | 'attack-start' | 'attack-message' | 'attack-guess' | 'attack-result' | 'attack-state' | 'owner-sessions' | 'report-create';
 
 export function serveFunction(name: HandlerName): void {
   Deno.serve(async (request) => {
@@ -750,6 +800,7 @@ export function serveFunction(name: HandlerName): void {
         case 'attack-message': response = await attackMessage(request, auth.user, auth.db); break;
         case 'attack-guess': response = await attackGuess(request, auth.user, auth.db); break;
         case 'attack-result': response = await attackResult(request, auth.user, auth.db); break;
+        case 'attack-state': response = await attackState(request, auth.user, auth.db); break;
         case 'owner-sessions': response = await ownerSessions(request, auth.user, auth.db); break;
         case 'report-create': response = await reportCreate(request, auth.user, auth.db); break;
       }

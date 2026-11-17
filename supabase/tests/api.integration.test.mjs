@@ -285,10 +285,18 @@ test('hosted Stage 6 API enforces limits, wins by guess and expires sessions', a
   const inProgressResult = await api('attack-result', { token: attacker.token, body: { sessionId: cracked.sessionId } });
   assert.equal(inProgressResult.response.status, 409, 'active result must not reveal the secret');
   assert.equal(JSON.stringify(inProgressResult.data).includes(secret), false);
+  const resumed = await expectApi('attack-state', { token: attacker.token, body: { sessionId: cracked.sessionId } });
+  assert.equal(resumed.ended, false);
+  assert.equal(resumed.guard.id, guardB);
+  assert.equal(JSON.stringify(resumed).includes(secret), false, 'resume must not reveal the secret');
+  assert.equal('orders' in resumed || 'leakFlags' in resumed || 'instructions' in resumed.guard, false);
+  const stranger = await api('attack-state', { token: owner.token, body: { sessionId: cracked.sessionId } });
+  assert.equal(stranger.response.status, 404, 'only the attacker can resume a heist');
   const guess = await expectApi('attack-guess', { token: attacker.token, body: { sessionId: cracked.sessionId, guess: secret } });
   assert.equal(guess.correct, true);
   const result = await expectApi('attack-result', { token: attacker.token, body: { sessionId: cracked.sessionId } });
   assert.equal(result.key, secret);
+  assert.equal(result.wrongGuesses, 0);
   assert.ok(result.orders, 'the winner receives orders after a correct guess');
   const ownerSessions = await expectApi('owner-sessions', {
     token: owner.token, method: 'GET', query: `?guardId=${guardB}`,
