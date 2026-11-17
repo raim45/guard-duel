@@ -3,6 +3,7 @@
 @import "@fontsource-variable/nunito";
 @import "./components/ui/ui.css";
 @import "./components/game/game.css";
+@import "./components/chat/chat.css";
 
 @theme {
   --color-ink: #0c2430;

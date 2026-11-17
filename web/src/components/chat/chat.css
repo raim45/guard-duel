@@ -1,0 +1,135 @@
+/* ---------- Bubbles ---------- */
+.bubble {
+  max-width: 80%;
+  padding: 8px 14px;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-ink);
+  border: 3px solid var(--color-ink);
+  border-radius: 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 768px) { .bubble { font-size: 17px; line-height: 24px; } }
+.bubble-cracker { background: var(--color-sky); border-bottom-right-radius: 6px; }
+.bubble-warden { background: var(--color-chalk); border-bottom-left-radius: 6px; }
+.bubble-row-cracker { display: flex; justify-content: flex-end; }
+.bubble-row-warden { display: flex; align-items: flex-end; gap: 8px; }
+
+/* ---------- Thinking plate ---------- */
+.thinking-dots { display: inline-flex; align-items: center; gap: 6px; height: 22px; }
+.thinking-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  animation: dot-bounce 600ms ease-in-out infinite;
+  animation-delay: calc(var(--i) * 120ms);
+}
+@keyframes dot-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+/* ---------- System note ---------- */
+.system-note {
+  display: inline-block;
+  max-width: 90%;
+  padding: 2px 14px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--color-chalk-dim);
+  border: 2px dashed var(--color-chalk-dim);
+  border-radius: var(--radius-chip);
+}
+
+/* ---------- Chat log ---------- */
+.chat-log { padding: 12px; overflow-y: auto; overscroll-behavior: contain; }
+.jump-pill { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 1; }
+
+/* ---------- Composer ---------- */
+.composer-input {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--color-chalk);
+  resize: none;
+}
+.composer-input::placeholder { color: var(--color-chalk-dim); }
+.composer-input:disabled { cursor: not-allowed; opacity: 0.7; }
+.cooldown-ring { position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px); pointer-events: none; }
+.cooldown-ring rect {
+  width: calc(100% - 3px);
+  height: calc(100% - 3px);
+  fill: none;
+  stroke: var(--color-sky);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: cooldown-sweep var(--cooldown) linear forwards;
+  animation-delay: var(--cooldown-delay, 0s);
+}
+@keyframes cooldown-sweep { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+
+/* ---------- Key dial ---------- */
+.key-slots { position: relative; display: flex; gap: 4px; justify-content: center; width: 100%; }
+.key-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 48px;
+  height: 60px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 32px;
+  color: var(--color-chalk);
+}
+.key-slot[data-active="true"] { outline: 3px solid var(--color-brass); outline-offset: 0; }
+.key-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  color: transparent;
+  caret-color: transparent;
+  background: transparent;
+  border: 0;
+  outline: none;
+  opacity: 0;
+}
+.key-slots:focus-within .key-slot[data-active="true"] { outline-color: var(--color-sky); }
+.key-wide {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--color-chalk);
+}
+
+/* ---------- Transcript viewer ---------- */
+.leak-mark { color: var(--color-ink); background: linear-gradient(transparent 55%, rgba(255, 197, 61, 0.7) 55%); }
+.leak-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 20px;
+  color: var(--color-ink);
+  background: var(--color-coral);
+  border: 2px solid var(--color-ink);
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-dots i { animation: none; }
+  .cooldown-ring rect { animation: none; stroke-dashoffset: 0; }
+}
